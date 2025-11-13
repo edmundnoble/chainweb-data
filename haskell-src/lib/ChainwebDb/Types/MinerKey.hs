@@ -1,7 +1,10 @@
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DerivingStrategies #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE TypeSynonymInstances #-}
 
 module ChainwebDb.Types.MinerKey where
 
@@ -17,6 +20,8 @@ data MinerKeyT f = MinerKey
   , _minerKey_key :: C f Text }
   deriving stock (Generic)
   deriving anyclass (Beamable)
+
+deriving instance Show MinerKey
 
 type MinerKey = MinerKeyT Identity
 type MinerKeyId = PrimaryKey MinerKeyT Identity

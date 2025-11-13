@@ -7,6 +7,7 @@
 {-# LANGUAGE ImpredicativeTypes #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE UndecidableInstances #-}
 
@@ -56,6 +57,9 @@ data BlockT f = Block
   deriving stock (Generic)
   deriving anyclass (Beamable)
 
+briefBlock :: Block -> String
+briefBlock blk = show (_block_chainId blk) <> "@" <> show (_block_height blk) <> ":" <> take 6 (show $ _block_hash blk)
+
 type Block = BlockT Identity
 type BlockId = PrimaryKey BlockT Identity
 
@@ -94,5 +98,7 @@ instance Table BlockT where
     deriving stock (Generic)
     deriving anyclass (Beamable)
   primaryKey = BlockId . _block_hash
+
+deriving instance Show (PrimaryKey BlockT Identity)
 
 unBlockId (BlockId a) = a

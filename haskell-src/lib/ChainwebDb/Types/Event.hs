@@ -7,6 +7,7 @@
 {-# LANGUAGE ImpredicativeTypes #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE UndecidableInstances #-}
 
@@ -42,6 +43,8 @@ data EventT f = Event
   deriving stock (Generic)
   deriving anyclass (Beamable)
 
+deriving instance Show Event
+
 type Event = EventT Identity
 type EventId = PrimaryKey EventT Identity
 
@@ -64,4 +67,3 @@ chainweb-data: internal error: Unable to commit 1048576 bytes of memory
 Killed
 -}
   primaryKey = EventId <$> _ev_requestkey <*> _ev_block <*> _ev_idx
-

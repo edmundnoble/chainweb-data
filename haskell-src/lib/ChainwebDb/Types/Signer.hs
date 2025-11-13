@@ -7,6 +7,7 @@
 {-# LANGUAGE ImpredicativeTypes #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE UndecidableInstances #-}
 
@@ -47,6 +48,8 @@ data SignerT f = Signer
   deriving stock (Generic)
   deriving anyclass (Beamable)
 
+deriving instance Show Signer
+
 type Signer = SignerT Identity
 type SignerId = PrimaryKey SignerT Identity
 
@@ -55,4 +58,3 @@ instance Table SignerT where
     deriving stock (Generic)
     deriving anyclass (Beamable)
   primaryKey = SignerId <$> _signer_requestkey <*> _signer_idx
-

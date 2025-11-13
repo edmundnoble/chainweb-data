@@ -42,6 +42,7 @@ import           Database.Beam.Backend.SQL.BeamExtensions
 import           Database.Beam.Postgres
 import           Database.Beam.Postgres.Full (insert, onConflict)
 import           Database.PostgreSQL.Simple.Transaction (withTransaction,withSavepoint)
+import           System.Logger.Types hiding (logg)
 
 ---
 
@@ -82,7 +83,8 @@ writes pool b ks ts es ss tf = P.withResource pool $ \c -> withTransaction c $ d
         --   (map (const '.') ts)
 
 batchWrites
-  :: P.Pool Connection
+  :: LogFunctionIO T.Text
+  -> P.Pool Connection
   -> [Block]
   -> [[T.Text]]
   -> [[Transaction]]
@@ -90,10 +92,11 @@ batchWrites
   -> [[Signer]]
   -> [[Transfer]]
   -> IO ()
-batchWrites pool bs kss tss ess sss tfs = P.withResource pool $ \c -> withTransaction c $ do
+batchWrites logg pool bs kss tss ess sss tfs = P.withResource pool $ \c -> withTransaction c $ do
 
     runBeamPostgres c $ do
       -- Write the Blocks if unique
+      liftIO $ logg Debug $ "inserting blocks " <> fromString (show (briefBlock <$> bs))
       runInsert
         $ insert (_cddb_blocks database) (insertValues bs)
         $ onConflict (conflictingFields primaryKey) onConflictDoNothing
@@ -101,6 +104,7 @@ batchWrites pool bs kss tss ess sss tfs = P.withResource pool $ \c -> withTransa
 
       let mks = concat $ zipWith (\b ks -> map (MinerKey (pk b)) ks) bs kss
 
+      liftIO $ logg Debug $ "inserting miner keys " <> fromString (show mks)
       runInsert
         $ insert (_cddb_minerkeys database) (insertValues mks)
         $ onConflict (conflictingFields primaryKey) onConflictDoNothing
@@ -108,18 +112,22 @@ batchWrites pool bs kss tss ess sss tfs = P.withResource pool $ \c -> withTransa
     withSavepoint c $ do
       runBeamPostgres c $ do
         -- Write the TXs if unique
+        liftIO $ logg Debug $ "inserting transactions " <> fromString (show tss)
         runInsert
           $ insert (_cddb_transactions database) (insertValues $ concat tss)
           $ onConflict (conflictingFields primaryKey) onConflictDoNothing
 
+        liftIO $ logg Debug $ "inserting events " <> fromString (show ess)
         runInsert
           $ insert (_cddb_events database) (insertValues $ concat ess)
           $ onConflict (conflictingFields primaryKey) onConflictDoNothing
 
+        liftIO $ logg Debug $ "inserting signers " <> fromString (show sss)
         runInsert
           $ insert (_cddb_signers database) (insertValues $ concat sss)
           $ onConflict (conflictingFields primaryKey) onConflictDoNothing
 
+        liftIO $ logg Debug $ "inserting transfers " <> fromString (show tfs)
         runInsert
           $ insert (_cddb_transfers database) (insertValues $ concat tfs)
           $ onConflict (conflictingFields primaryKey) onConflictDoNothing
@@ -163,7 +171,7 @@ writeBlocks env pool count blocks = do
         err = printf "writeBlocks failed because we don't know how to work this version %s" version
       withEventsMinHeight version err $ \evMinHeight -> do
           let !tfs = M.intersectionWith (\pl bh -> mkTransferRows (fromIntegral $ _blockHeader_height bh) (_blockHeader_chainId bh) (DbHash $ hashB64U $ _blockHeader_hash bh) (posixSecondsToUTCTime $ _blockHeader_creationTime bh) pl evMinHeight) pls (makeBlockMap bhs')
-          batchWrites pool (M.elems bs) (M.elems kss) (M.elems tss) (M.elems ess) (M.elems sss) (M.elems tfs)
+          batchWrites (_env_logger env) pool (M.elems bs) (M.elems kss) (M.elems tss) (M.elems ess) (M.elems sss) (M.elems tfs)
           atomicModifyIORef' count (\n -> (n + numWrites, ()))
   where
 
