@@ -6,6 +6,7 @@
 {-# LANGUAGE ImpredicativeTypes #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE UndecidableInstances #-}
 
@@ -57,6 +58,8 @@ data TransactionT f = Transaction
   }
   deriving stock (Generic)
   deriving anyclass (Beamable)
+
+deriving instance Show Transaction
 
 type Transaction = TransactionT Identity
 type TransactionId = PrimaryKey TransactionT Identity

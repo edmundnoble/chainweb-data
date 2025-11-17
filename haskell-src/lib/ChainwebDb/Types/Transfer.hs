@@ -7,6 +7,7 @@
 {-# LANGUAGE ImpredicativeTypes #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE UndecidableInstances #-}
 
@@ -43,6 +44,8 @@ data TransferT f = Transfer
   }
   deriving stock (Generic)
   deriving anyclass (Beamable)
+
+deriving instance Show Transfer
 
 type Transfer = TransferT Identity
 type TransferId = PrimaryKey TransferT Identity

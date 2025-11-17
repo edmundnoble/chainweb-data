@@ -68,7 +68,7 @@ gapsCut env args cutBS = do
               mapM_ (f logg count cid) ranges
         let gapFiller = do
               race_ (progress logg count totalNumBlocks)
-                    (traverseConcurrently_ Par' doChain (M.toList gapsByChain))
+                    (traverseConcurrently_ Seq doChain (M.toList gapsByChain))
               final <- readIORef count
               logg Info $ fromString
                 $ printf "Filled in %d missing blocks" final
